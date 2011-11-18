@@ -16,21 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
 import optparse
-import re
-import os
 import struct
-def runBash(cmd, cwd=None):
-    p = subprocess.Popen(cmd, cwd)
-    os.waitpid(p.pid,0)
 
 def controller():
     opt = optparse.OptionParser(description="Unpack Tivic firmware images into"+
         " the seperate files it contains",
         prog="unpack",
         version="3.14",
-        usage="%prog [FIRMWARE.ba]")
+        usage="%prog FIRMWARE.ba")
 
     options, arguments = opt.parse_args()
     if len(arguments) < 1:
