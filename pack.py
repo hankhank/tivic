@@ -20,6 +20,7 @@ import optparse
 import struct
 import array
 import os
+import sys
 
 # Take byte array and return a stringisation of it
 def bytesTostring(barray):
@@ -57,46 +58,38 @@ def controller():
     # Think this section is CRC/Verioning/something. This one came from image
     # DHS_M6_0911061401.ba
     unknown_magic_int = [0xbe, 0x37, 0x2a, 0x24] 
+    unknown_padding = [0x00, 0x00, 0x00, 0x00, 0x03] 
 
     # Start 
-    print("Starting...")
+    sys.stderr.write("Starting...\n")
     
     # Header
     fw = ''
     fw += companytag
     fw += bytesTostring(unknown_magic_int)
+    fw += bytesTostring(unknown_padding)
     
     # Calculate name and file sizes
     for f in arguments:
         fsize = os.stat(f).st_size
         nsize = len(f)
-        print("File: {:20} NameSize: {:10} FileSize: {:10,}".format(f, nsize, fsize))
-        filesizing = struct.pack('BI', nsize, fsize)
+        sys.stderr.write("File: {:20} NameSize: {:10} FileSize: {:10,}\n".format(f,
+            nsize, fsize))
+        filesizing = struct.pack("<1B1I", nsize, fsize)
         fw += filesizing
-    print fw
-    exit()
-    # Test for company tag
-    print("Checking company tag")
-    startstring = fw.read(len(companytag))
-    if(not startstring == companytag):
-        print "The company tag was missing or incorrect. We read " + startstring
-        + " but expected " + companytag
     
-    # Goto file sizes and read them out
-    fw.seek(sizestart)
-    structformat = "<1B1I"
-    structsize = struct.calcsize(structformat)
-    filesizes = []
-    for i in range(0,numfiles):
-        filesizes.append(struct.unpack(structformat,fw.read(structsize)))
-    
+    # Output header
+    sys.stdout.write(fw)
+    fw = ''
+
     # Dump the files
-    for fs in filesizes:
-        name = fw.read(fs[0])
-        print "Now reading and writing file " + name
-        outfile = open(name, 'w')
-        outfile.write(fw.read(fs[1]))
-        outfile.close()
+    for f in arguments:
+        sys.stdout.write(f.strip())
+        fp = open(f, 'rb')
+        sys.stdout.write(fp.read())
+        fp.close()
+
+    sys.stderr.write("Finished...\n")
 
 def main():
     controller()
