@@ -1,4 +1,4 @@
-#! /usr/bin/python2.7
+#! /usr/bin/python
 
 # Tivic firmware unpacker
 # Copyright (C) 2011 hank@sideramota
@@ -39,19 +39,19 @@ def controller():
     # 4. File size info is of the format [name-size][file-size]
     #                                    [ 1 byte  ][ 4 bytes ]   
     numfiles = 5
-    companytag = "!teltel-dhs!"
+    companytag = b'!teltel-dhs!'
     sizestart = 0x15
 
     # Start 
-    print "Starting..."
+    print("Starting...")
     fw = open(firmware, 'rb')
     
     # Test for company tag
-    print "Checking company tag"
+    print("Checking company tag")
     startstring = fw.read(len(companytag))
     if(not startstring == companytag):
-        print "The company tag was missing or incorrect. We read " + startstring
-        + " but expected " + companytag
+        print("The company tag was missing or incorrect. We read " 
+            + startstring.decode("utf-8") + " but expected " + companytag)
     
     # Goto file sizes and read them out
     fw.seek(sizestart)
@@ -64,8 +64,8 @@ def controller():
     # Dump the files
     for fs in filesizes:
         name = fw.read(fs[0])
-        print "Now reading and writing file " + name
-        outfile = open(name, 'w')
+        print("Now reading and writing file " + name.decode("utf-8"))
+        outfile = open(name, 'wb')
         outfile.write(fw.read(fs[1]))
         outfile.close()
 

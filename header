@@ -1,0 +1,32 @@
+Section     Name_Start  File_Start  End     Size    Name_Len
+Stamp       0           -           B       B       -
+Header      B                       2D      22      -
+File1       2E          3E          13FE    13C0    10 
+File2       13FE        140C        436B    2f5f    E
+File3       436B        4373        10DE3   ca70    8
+File4       10DE3       10DE8       10CD58  fbf70   5
+File5       10CD58      10CD5E      48ED50  381ff2  6
+
+Info        Start       Length  
+Allfiles    16          2E
+File1       16          3
+
+[ 1 byte ][  4 bytes  ]
+[name-len][file-length]
+
+9.dump
+File1       10      000013c0
+File2       0a      00002f64
+File3       06      0000ca70
+File4       06      000fbf70
+File5       06      00382000
+
+10.dump
+File1       10      000013c0
+File2       0a      00002f64
+File3       06      0000d604
+File4       06      00101040
+File5       06      003f5000
+
+File sizing starts 9 bytes in
+242a37be

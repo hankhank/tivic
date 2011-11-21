@@ -1,4 +1,4 @@
-#! /usr/bin/python2.7
+#! /usr/bin/python
 
 # Tivic firmware packer
 # Copyright (C) 2011 hank@sideramota
@@ -26,7 +26,14 @@ import sys
 def bytesTostring(barray):
     return array.array('B', barray).tostring()
 
+def make_streams_binary():
+    sys.stdin = sys.stdin.detach()
+    sys.stdout = sys.stdout.detach()
+
 def controller():
+
+    make_streams_binary()
+
     opt = optparse.OptionParser(description="Pack start_install fw_install Config" 
         + " Kernel Rootfs into a Tivic firmware image format",
         prog="pack",
@@ -35,6 +42,7 @@ def controller():
 
     options, arguments = opt.parse_args()
     if len(arguments) < 5:
+        b
         opt.print_help()
         return
 
@@ -57,17 +65,17 @@ def controller():
     sizestart = 0x15
     # Think this section is CRC/Verioning/something. This one came from image
     # DHS_M6_0911061401.ba
-    unknown_magic_int = [0xbe, 0x37, 0x2a, 0x24] 
-    unknown_padding = [0x00, 0x00, 0x00, 0x00, 0x03] 
+    unknown_magic_int = bytearray([0xbe, 0x37, 0x2a, 0x24])
+    unknown_padding = bytearray([0x00, 0x00, 0x00, 0x00, 0x03])
 
     # Start 
     sys.stderr.write("Starting...\n")
     
     # Header
-    fw = ''
-    fw += companytag
-    fw += bytesTostring(unknown_magic_int)
-    fw += bytesTostring(unknown_padding)
+    fw = bytearray()
+    fw += companytag.encode()
+    fw += unknown_magic_int
+    fw += unknown_padding
     
     # Calculate name and file sizes
     for f in arguments:
@@ -80,11 +88,11 @@ def controller():
     
     # Output header
     sys.stdout.write(fw)
-    fw = ''
+    fw = bytearray()
 
     # Dump the files
     for f in arguments:
-        sys.stdout.write(f.strip())
+        sys.stdout.write(f.strip().encode("utf-8"))
         fp = open(f, 'rb')
         sys.stdout.write(fp.read())
         fp.close()
