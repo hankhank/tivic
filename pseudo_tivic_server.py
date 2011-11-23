@@ -22,7 +22,7 @@ import re
 import http.server
 
 fredrsp = '''<?xml version='1.0' standalone='yes'?>
-<fredresponse>
+        <fredresponse>
     <header>
         <sourceid>FRED</sourceid>
         <version>2.0</version>
@@ -34,9 +34,9 @@ fredrsp = '''<?xml version='1.0' standalone='yes'?>
         <filename>?MAC_ADDR={:12}</filename>
         <downloadmethod>http</downloadmethod>
         <downloadaddr>http://prov.teltel.com/</downloadaddr>
-        </fred-to-ta.createacctresp>
+      </fred-to-ta.createacctresp>
     </body>
-</fredresponse>'''
+        </fredresponse>'''
 
 class tivicHandler(http.server.BaseHTTPRequestHandler):
     
@@ -44,7 +44,7 @@ class tivicHandler(http.server.BaseHTTPRequestHandler):
 
     def __init__(self, request, client_address, server):
         http.server.BaseHTTPRequestHandler.__init__(self, request, client_address, server)
-    
+
     def do_GET(self):
         print("do_Get")
         print(self.path)
@@ -54,9 +54,11 @@ class tivicHandler(http.server.BaseHTTPRequestHandler):
 
     def do_POST(self):
         print("Handling POST for {:} request from {:}".format(self.path, self.client_address[0]))
-        self.send_response(100)
+        #self.send_response(100)
+        self.protocol_version = 'HTTP/1.1'
         self.send_response(200)
-        self.send_header("Content-Type", "text/html")
+        self.send_header("Content-Type", "text/html; charset=UTF-8")
+        self.send_header("Content-Length", len(fredrsp)+7)
         self.end_headers()
 
         # First request sent by tivic. Looking for fred response 
