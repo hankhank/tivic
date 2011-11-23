@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import optparse
+import cgi
+import re
 import http.server
 
 fredrsp = '''<?xml version='1.0' standalone='yes'?>
@@ -30,13 +32,15 @@ fredrsp = '''<?xml version='1.0' standalone='yes'?>
         <facrst>false</facrst>
         <status>success</status>
         <filename>?MAC_ADDR={:12}</filename>
-        <downloadmethod>https</downloadmethod>
-        <downloadaddr>https://prov.teltel.com/</downloadaddr>
+        <downloadmethod>http</downloadmethod>
+        <downloadaddr>http://prov.teltel.com/</downloadaddr>
         </fred-to-ta.createacctresp>
     </body>
 </fredresponse>'''
 
 class tivicHandler(http.server.BaseHTTPRequestHandler):
+    
+    mac_re = 'MAC_ADDR=([0-9A-Fa-f]{12})'
 
     def __init__(self, request, client_address, server):
         http.server.BaseHTTPRequestHandler.__init__(self, request, client_address, server)
@@ -49,10 +53,21 @@ class tivicHandler(http.server.BaseHTTPRequestHandler):
         print("head")
 
     def do_POST(self):
-        print("do_POST")
-        print(self.headers.get('Content'))
-        print(self.path)
-        print(self.rfile.read())
+        print("Handling POST for {:} request from {:}".format(self.path, self.client_address[0]))
+        self.send_response(100)
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html")
+        self.end_headers()
+
+        # First request sent by tivic. Looking for fred response 
+        # which tells it where to get its shit from
+        if self.path.endswith("index.php"):
+            data = self.rfile.read(21) # blocks unless we specify how long to expect
+            mac = re.match(self.mac_re, data.decode("utf-8"))
+            if mac:
+                print(fredrsp.format(mac.group(1)),'UTF-8')
+                self.wfile.write(bytes(fredrsp.format(mac.group(1)),'UTF-8'))
+            return
 
 # From Python doco
 def run(port, server_class=http.server.HTTPServer, handler_class=tivicHandler):
