@@ -20,6 +20,7 @@ import optparse
 import cgi
 import re
 import http.server
+import http.client
 
 fredrsp = '''<?xml version='1.0' standalone='yes'?>
         <fredresponse>
@@ -38,6 +39,32 @@ fredrsp = '''<?xml version='1.0' standalone='yes'?>
     </body>
         </fredresponse>'''
 
+downloadaddr = 'prov.teltel.com'
+
+getresp = '''phone_number1=1000602425_AT_63.50.teltel.com
+pnpn_no=99000124
+displayname1=99000124
+auth_username1=1000602425@63.50.teltel.com
+auth_password1=8095731de192dc54
+service_domain=teltel.com
+outbound_proxy_ip=209.133.58.69
+outbound_proxy_port=443
+transport=TLS
+image_file=DHS_M6_0911061401.ba
+auto_fw_check_time=432000
+obp_candidate=202.5.224.91:443,tls|203.153.165.31:443,tls|209.133.58.51:443,tls|202.5.224.85:443,tls|59.151.38.17:443,tls
+apvstatus=1
+fw_download_url=http://download.tsp.teltel.com/dhs/firmware/starsemi
+EdgeProxies=209.133.58.73:443;transport=tls|59.151.38.19:443;transport=tls|59.151.38.31:443;transport=tls
+TurnServers=209.133.58.68:3478|202.5.224.224:3478
+x_accesskey=71736460873d6604
+plugin_prov_url=http://kbsapi.teltel.com/KS_API.php
+plugin_verchk_interval=604800
+ice_disable=0
+gserv_info_url=http://ossapi.tsp.teltel.com/oss_api.php
+'''
+
+#/?MAC_ADDR=0026cd00002f&KT_KEY=JoIj1D87N3VupmbY59HPzGhUvsdQOykFde5866b0d355f070d685746ad16b84ea&MY_IMAGE_FILE=DHS_M6_0909102305.ba
 class tivicHandler(http.server.BaseHTTPRequestHandler):
     
     mac_re = 'MAC_ADDR=([0-9A-Fa-f]{12})'
@@ -45,9 +72,22 @@ class tivicHandler(http.server.BaseHTTPRequestHandler):
     def __init__(self, request, client_address, server):
         http.server.BaseHTTPRequestHandler.__init__(self, request, client_address, server)
 
+    def makeDict(self, rsp):
+        ret = {}
+        for line in rsp.splitlines():
+            [key, value] = line.split('=', 1)
+            ret[key] = value
+        return ret
+
     def do_GET(self):
         print("do_Get")
         print(self.path)
+        if self.path.startswith('/'):
+            print("Lets request from teltel and get back the bits and pieces we need")
+            hc = http.client.HTTPConnection(downloadaddr)
+            hc.request('GET', self.path)
+            rsp = hc.getresponse().read().decode('UTF-8')
+            print(self.makeDict(rsp))
     
     def do_HEAD(self):
         print("head")
@@ -88,6 +128,11 @@ def controller():
         action = 'store',
         help='Port for server to sit on',
         default=80)
+
+    opt.add_option('--no_request', '-n',
+        action = 'store_true',
+        help='Do not make any requests to tivic servers',
+        default=False)
 	
     options, arguments = opt.parse_args()
 #    if len(arguments) < 5:
