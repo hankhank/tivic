@@ -71,6 +71,7 @@ class tivicHandler(http.server.BaseHTTPRequestHandler):
 
     def __init__(self, request, client_address, server):
         http.server.BaseHTTPRequestHandler.__init__(self, request, client_address, server)
+        self.details = {}
 
     def makeDict(self, rsp):
         ret = {}
@@ -80,21 +81,32 @@ class tivicHandler(http.server.BaseHTTPRequestHandler):
         return ret
 
     def do_GET(self):
-        print("do_Get")
-        print(self.path)
-        if self.path.startswith('/'):
-            print("Lets request from teltel and get back the bits and pieces we need")
-            hc = http.client.HTTPConnection(downloadaddr)
-            hc.request('GET', self.path)
-            rsp = hc.getresponse().read().decode('UTF-8')
-            print(self.makeDict(rsp))
-    
+        print("Handling GET for {:} request from {:}".format(self.path, self.client_address[0]))
+        self.protocol_version = 'HTTP/1.1'
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=UTF-8")
+
+        if self.path.startswith('/dhs/firmware/starsemi/'):
+            print("wants to download")       
+        elif self.path.startswith('/'):
+            if not NO_REQUEST:
+                print("Lets request from teltel and get back the bits and pieces we need")
+                hc = http.client.HTTPConnection(downloadaddr)
+                hc.request('GET', self.path)
+                getrsp = hc.getresponse().read().decode('UTF-8')
+            self.details = self.makeDict(getrsp)
+            # Check for new firmware once a minute
+            self.details["auto_fw_check_time"] = "60"
+            dstr = "\n".join("{:}={:}".format(d, self.details[d]) for d in self.details).encode("UTF-8")
+            self.send_header("Content-Length", len(dstr)+7)
+            self.end_headers()
+            self.wfile.write(dstr)
+
     def do_HEAD(self):
         print("head")
 
     def do_POST(self):
         print("Handling POST for {:} request from {:}".format(self.path, self.client_address[0]))
-        #self.send_response(100)
         self.protocol_version = 'HTTP/1.1'
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=UTF-8")
@@ -117,6 +129,8 @@ def run(port, server_class=http.server.HTTPServer, handler_class=tivicHandler):
     httpd = server_class(server_address, handler_class)
     httpd.serve_forever()
 
+NO_REQUEST = False
+
 def controller():
     opt = optparse.OptionParser(description="Pack start_install fw_install Config" 
         + " Kernel Rootfs into a Tivic firmware image format",
@@ -135,6 +149,8 @@ def controller():
         default=False)
 	
     options, arguments = opt.parse_args()
+    NO_REQUEST = options.no_request
+
 #    if len(arguments) < 5:
 #        opt.print_help()
 #        return
