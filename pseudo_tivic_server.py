@@ -19,6 +19,7 @@
 import optparse
 import cgi
 import re
+import os
 import http.server
 import http.client
 
@@ -41,7 +42,7 @@ fredrsp = '''<?xml version='1.0' standalone='yes'?>
 
 downloadaddr = 'prov.teltel.com'
 
-getresp = '''phone_number1=1000602425_AT_63.50.teltel.com
+getrsp = '''phone_number1=1000602425_AT_63.50.teltel.com
 pnpn_no=99000124
 displayname1=99000124
 auth_username1=1000602425@63.50.teltel.com
@@ -64,6 +65,9 @@ ice_disable=0
 gserv_info_url=http://ossapi.tsp.teltel.com/oss_api.php
 '''
 
+ASKTELTEL = False
+FIRMWAREIMAGE = ''
+
 #/?MAC_ADDR=0026cd00002f&KT_KEY=JoIj1D87N3VupmbY59HPzGhUvsdQOykFde5866b0d355f070d685746ad16b84ea&MY_IMAGE_FILE=DHS_M6_0909102305.ba
 class tivicHandler(http.server.BaseHTTPRequestHandler):
     
@@ -75,6 +79,7 @@ class tivicHandler(http.server.BaseHTTPRequestHandler):
 
     def makeDict(self, rsp):
         ret = {}
+
         for line in rsp.splitlines():
             [key, value] = line.split('=', 1)
             ret[key] = value
@@ -84,20 +89,29 @@ class tivicHandler(http.server.BaseHTTPRequestHandler):
         print("Handling GET for {:} request from {:}".format(self.path, self.client_address[0]))
         self.protocol_version = 'HTTP/1.1'
         self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=UTF-8")
 
         if self.path.startswith('/dhs/firmware/starsemi/'):
-            print("wants to download")       
+            global FIRMWAREIMAGE
+            print("Wants to download firmware")       
+            fsize = os.stat(FIRMWAREIMAGE).st_size
+            fwimg = open(FIRMWAREIMAGE, 'rb')
+            self.send_header("Content-Type", "text/plain; charset=UTF-8")
+            self.send_header("Content-Length", fsize)
+            self.end_headers()
+            self.wfile.write(fwimg.read())
+
         elif self.path.startswith('/'):
-            if not NO_REQUEST:
+            rsp = getrsp
+            if ASKTELTEL:
                 print("Lets request from teltel and get back the bits and pieces we need")
                 hc = http.client.HTTPConnection(downloadaddr)
                 hc.request('GET', self.path)
-                getrsp = hc.getresponse().read().decode('UTF-8')
-            self.details = self.makeDict(getrsp)
+                rsp = hc.getresponse().read().decode('UTF-8')
+            self.details = self.makeDict(rsp)
             # Check for new firmware once a minute
             self.details["auto_fw_check_time"] = "60"
             dstr = "\n".join("{:}={:}".format(d, self.details[d]) for d in self.details).encode("UTF-8")
+            self.send_header("Content-Type", "text/html; charset=UTF-8")
             self.send_header("Content-Length", len(dstr)+7)
             self.end_headers()
             self.wfile.write(dstr)
@@ -129,31 +143,31 @@ def run(port, server_class=http.server.HTTPServer, handler_class=tivicHandler):
     httpd = server_class(server_address, handler_class)
     httpd.serve_forever()
 
-NO_REQUEST = False
-
 def controller():
-    opt = optparse.OptionParser(description="Pack start_install fw_install Config" 
-        + " Kernel Rootfs into a Tivic firmware image format",
+    opt = optparse.OptionParser(description="", 
         prog="pseudo_tivic_server",
         version="3.14",
-        usage="%prog start_install fw_install config kernel rootfs")
+        usage="%prog fw_image")
 
     opt.add_option('--port', '-p',
         action = 'store',
         help='Port for server to sit on',
         default=80)
 
-    opt.add_option('--no_request', '-n',
+    opt.add_option('--ask_teltel', '-a',
         action = 'store_true',
-        help='Do not make any requests to tivic servers',
+        help='Make requests to tivic servers',
         default=False)
 	
     options, arguments = opt.parse_args()
-    NO_REQUEST = options.no_request
+    ASKTELTEL = options.ask_teltel
 
-#    if len(arguments) < 5:
-#        opt.print_help()
-#        return
+    if len(arguments) < 1:
+        opt.print_help()
+        return
+    
+    global FIRMWAREIMAGE
+    FIRMWAREIMAGE = arguments[0]
 
     # Start Server
     run(int(options.port))
