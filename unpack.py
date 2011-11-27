@@ -26,6 +26,11 @@ def controller():
         version="3.14",
         usage="%prog FIRMWARE.ba")
 
+    opt.add_option('--details', '-d',
+        action = 'store_true',
+        help='Extract and print header and file details',
+        default=80)
+
     options, arguments = opt.parse_args()
     if len(arguments) < 1:
         opt.print_help()
@@ -53,6 +58,13 @@ def controller():
         print("The company tag was missing or incorrect. We read " 
             + startstring.decode("utf-8") + " but expected " + companytag)
     
+    # Get Magic Number
+    structformat = "<1I"
+    structsize = struct.calcsize(structformat)
+    magicnumber = struct.unpack(structformat,fw.read(structsize))[0]
+    if options.details:
+        print("Magic Number: {:,} {:,}".format(fwsize/8, fwsize/8/1024/1024))
+
     # Goto file sizes and read them out
     fw.seek(sizestart)
     structformat = "<1B1I"
@@ -64,10 +76,14 @@ def controller():
     # Dump the files
     for fs in filesizes:
         name = fw.read(fs[0])
-        print("Now reading and writing file " + name.decode("utf-8"))
-        outfile = open(name, 'wb')
-        outfile.write(fw.read(fs[1]))
-        outfile.close()
+        if options.details:
+            print("Filename: {:<20s} Size: {:>12,d}".format(name.decode("UTF-8"), fs[1]))
+            fw.read(fs[1]) # read to skip through file
+        else:
+            print("Extracting file " + name.decode("utf-8"))
+            outfile = open(name, 'wb')
+            outfile.write(fw.read(fs[1]))
+            outfile.close()
 
 def main():
     controller()
