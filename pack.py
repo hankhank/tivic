@@ -32,7 +32,6 @@ def make_streams_binary():
 
 def controller():
 
-    make_streams_binary()
 
     opt = optparse.OptionParser(description="Pack start_install fw_install Config" 
         + " Kernel Rootfs into a Tivic firmware image format",
@@ -42,9 +41,10 @@ def controller():
 
     options, arguments = opt.parse_args()
     if len(arguments) < 5:
-        b
         opt.print_help()
         return
+
+    make_streams_binary()
 
     # File parts
     start_install = arguments[0]
@@ -63,9 +63,8 @@ def controller():
     numfiles = 5
     companytag = "!teltel-dhs!"
     sizestart = 0x15
-    # Think this section is CRC/Verioning/something. This one came from image
-    # DHS_M6_0911061401.ba
-    unknown_magic_int = bytearray([0xbe, 0x37, 0x2a, 0x24])
+
+    # Common int to all fw I have seen. Perhaps versioning?
     unknown_padding = bytearray([0x00, 0x00, 0x00, 0x00, 0x03])
 
     # Start 
@@ -74,10 +73,10 @@ def controller():
     # Header
     fw = bytearray()
     fw += companytag.encode()
-    fw += unknown_magic_int
+    # Check sum occupies int here
     fw += unknown_padding
     
-    # Calculate name and file sizes
+    # File names and sizes
     for f in arguments:
         fsize = os.stat(f).st_size
         nsize = len(f)
@@ -85,7 +84,26 @@ def controller():
             nsize, fsize))
         filesizing = struct.pack("<1B1I", nsize, fsize)
         fw += filesizing
-    
+ 
+    # Calculate checksum   
+    structformat = "<1B"
+    structsize = struct.calcsize(structformat)
+    checksum = 0
+    print(fw[0])
+    for x in range(len(fw)):
+        ub = struct.unpack(structformat, fw[x])[0]
+        checksum += ub
+    for f in arguments:
+        fp = open(f, 'rb')
+        while 1:
+            b = fp.read(structsize)
+            if not b:
+                break
+            ub = struct.unpack(structformat, b)[0]
+            checksum += ub
+    structformat = "<1I"
+    fw.insert(len(companytag), struct.pack(structformat, checksum))
+
     # Output header
     sys.stdout.write(fw)
     fw = bytearray()

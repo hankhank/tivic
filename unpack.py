@@ -29,7 +29,7 @@ def controller():
     opt.add_option('--details', '-d',
         action = 'store_true',
         help='Extract and print header and file details',
-        default=80)
+        default=False)
 
     options, arguments = opt.parse_args()
     if len(arguments) < 1:
@@ -58,12 +58,35 @@ def controller():
         print("The company tag was missing or incorrect. We read " 
             + startstring.decode("utf-8") + " but expected " + companytag)
     
-    # Get Magic Number
+    # Get Check Sum
+    # From some disassembly and trial and error looks as though the checksum
+    # is calculated by adding every byte in the file together, capturing overflows
     structformat = "<1I"
     structsize = struct.calcsize(structformat)
-    magicnumber = struct.unpack(structformat,fw.read(structsize))[0]
+    readchecksum = struct.unpack(structformat,fw.read(structsize))[0]
     if options.details:
-        print("Magic Number: {:,} {:,}".format(fwsize/8, fwsize/8/1024/1024))
+        print("Read checksum: {:x}".format(readchecksum))
+    
+    # Calc Check sum
+    structformat = "<1B"
+    structsize = struct.calcsize(structformat)
+    calcchecksum = 0
+    while 1:
+        b = fw.read(structsize)
+        if not b:
+            break
+        ub = struct.unpack(structformat, b)[0]
+        calcchecksum += ub
+    fw.seek(0)
+    for j in range(len(companytag)):
+        b = fw.read(structsize)
+        ub = struct.unpack(structformat, b)[0]
+        calcchecksum += ub
+    if options.details:
+        print("Calculated checksum: {:x}".format(calcchecksum))
+    
+    if (readchecksum != calcchecksum):
+        print("Check sum incorrect~!")
 
     # Goto file sizes and read them out
     fw.seek(sizestart)
