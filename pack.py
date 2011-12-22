@@ -32,7 +32,6 @@ def make_streams_binary():
 
 def controller():
 
-
     opt = optparse.OptionParser(description="Pack start_install fw_install Config" 
         + " Kernel Rootfs into a Tivic firmware image format",
         prog="pack",
@@ -56,9 +55,10 @@ def controller():
     # Assumptions made
     # 1. There are only 5 files start_install.sh fw_install.elf config kernel 
     #    rootfs
-    # 2. File starts with !teltel-dhs!
-    # 3. File size info starts at byte 0x16
-    # 4. File size info is of the format [name-size][file-size]
+    # 2. Checksum is calc by adding everything but checksum byte wise
+    # 3. File starts with !teltel-dhs!
+    # 4. File size info starts at byte 0x16
+    # 5. File size info is of the format [name-size][file-size]
     #                                    [ 1 byte  ][ 4 bytes ]   
     numfiles = 5
     companytag = "!teltel-dhs!"
@@ -89,11 +89,14 @@ def controller():
     structformat = "<1B"
     structsize = struct.calcsize(structformat)
     checksum = 0
-    print(fw[0])
+    # Add contents of header
     for x in range(len(fw)):
-        ub = struct.unpack(structformat, fw[x])[0]
-        checksum += ub
+        checksum += fw[x]
     for f in arguments:
+        # Add name to checksum
+        for x in f.encode("UTF-8"):
+            checksum += x
+        # Add file Contents
         fp = open(f, 'rb')
         while 1:
             b = fp.read(structsize)
@@ -101,8 +104,12 @@ def controller():
                 break
             ub = struct.unpack(structformat, b)[0]
             checksum += ub
-    structformat = "<1I"
-    fw.insert(len(companytag), struct.pack(structformat, checksum))
+
+    # Insert checksum into header
+    structformat = ">1I"
+    bytechecksum = struct.pack(structformat, checksum)
+    for x in range(4):
+        fw.insert(len(companytag), bytechecksum[x])
 
     # Output header
     sys.stdout.write(fw)
