@@ -1,0 +1,33 @@
+## kill kbs, crond, plugins for testing
+## contact CJ <cj.wang@teltel.com>
+#!/bin/sh
+
+killall kbs crond
+
+i=0
+pKbs=`pidof kbs`
+pCrond=`pidof crond`
+
+for list in `ls /flash/root/plugins/*_*`; do
+   list=${list##*/}
+   pPlugin="$pPlugin `pidof $list`"
+done
+
+while [ $i -lt 5 ]; do
+   if [ -z "$pKbs" ] || [ -z "$pPlugin" ]; then
+      killall kbs crond 2>/dev/null
+   fi
+
+   pKbs=`pidof kbs`
+   for list in `ls /flash/root/plugins/*_*`; do
+      list=${list##*/}
+      pPlugin="$pPlugin `pidof $list`"
+   done
+
+   sleep 1
+   i=$((i+1))
+done
+
+
+kill -9 $pKbs $pPlugin 2>/dev/null
+

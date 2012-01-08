@@ -1,0 +1,17 @@
+#!/bin/sh
+
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
+export PATH
+
+/bin/mount -n -t proc none proc/
+# mount root filesystem in read-write mode
+/bin/echo "Mounting root fs rw ..."
+/bin/mount -n -o remount,rw /
+#/bin/mount -n -t proc none proc/
+if [ -d /sys ]; then
+   mount -t sysfs sys /sys
+fi
+/bin/mount -t usbfs none /proc/bus/usb
+/bin/mount -t ramfs /dev/rd0 /var
+/bin/mount -t jffs2 /dev/mtdblock3 /flash
+exec /etc/init.d/rcS

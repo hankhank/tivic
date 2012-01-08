@@ -1,0 +1,61 @@
+## Normal rc for starsemi-sdk, linux2.6.16
+## contact CJ: msn   <godabc2001kimo@yahoo.com.tw>
+##             email <cj.wang@teltel.com>
+#!/bin/bash
+
+# func ###########################################
+
+
+# main ###########################################
+echo "##################################################"
+echo "#                Running Normal RC               #"
+echo "##################################################"
+
+# !cj! - teltel envior's
+export PATH=$PATH:/usr/local/bin:/usr/local/sbin:/flash:/flash/root
+KBS_CONF=/flash/root/config/kbs.config
+TT_SYS_CONF=/flash/root/config/sys.conf
+CRONTABS=/flash/cron/crontabs/root
+IS_QA=`fw_printenv isqa 2>/dev/null|cut -d= -f2`
+
+# !cj! - trigger crond
+if [ -e "$CRONTABS" ] ;then
+   /usr/bin/crontab $CRONTABS
+else
+   echo "Error: cant find $CRONTABS"
+fi
+
+# !cj! - preconf for passwd/autopro URL/sys.conf
+/sbin/ttsys.sh
+
+# !cj! - run /sbin/ttwan.sh b4 starting /etc/init.d/wan.sh
+/sbin/ttwan.sh "simple"
+
+# !cj! - check teltel system config file
+if [ -e $TT_SYS_CONF ]; then
+   . $TT_SYS_CONF
+else
+   echo "Error: can't find $TT_SYS_CONF"
+   exit 1 #TODO reboot?
+fi
+
+# !cj! - telnet
+if [ "$IS_QA" = "1" ]; then
+   echo "* start [telnetd] ..."
+   /usr/sbin/telnetd
+fi
+
+# !cj! - start samba
+/sbin/svsd
+
+# !quilai! - create smb base mount point
+if [ ! -d /var/tmp/media ]; then
+   mkdir -p /var/tmp/media
+   chmod 711 /var/tmp/media
+fi
+
+# !teltel! - start main project - kbs
+if [ -z "`/bin/pidof kbs`" ]; then
+   /sbin/kbs >/dev/console 2>&1 &
+fi
+

@@ -1,0 +1,11 @@
+#!/bin/ash
+case $1 in 
+   /var/tmp*)
+      PARTITION="/"${1#/*/*/} 
+      ;;
+   *)
+      PARTITION=$1
+      ;;
+esac
+
+df -k|grep $PARTITION|awk '{print $2" "$4" " }'

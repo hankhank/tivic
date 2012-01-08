@@ -1,0 +1,1 @@
+*/1 * * * * /etc/kbs_monitor.sh > /var/log/kbs_monitor.log

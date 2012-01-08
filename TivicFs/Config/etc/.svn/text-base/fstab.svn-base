@@ -1,0 +1,9 @@
+/dev/ram0	/		ext2	defaults	0	0
+none		/proc		proc	defaults	0	0
+#none            /proc/bus/usb   usbfs   defaults        0       0
+none		/dev/pts        devpts  defaults        0       0
+/dev/sda1       /mnt/usbdev     auto   noauto,user,exec,dev,suid,rw,mode=777,umask=000 0 0
+/dev/sdb1       /mnt/usbdev1    auto   noauto,user,exec,dev,suid,rw,mode=777,umask=000 0 0
+/dev/scd0       /mnt/cdrom      iso9660 noauto,owner,kudzu,ro 0 0
+/dev/hda1       /mnt/hda1       auto   noauto,exec,dev,suid,rw 0 0
+/dev/hda2       /mnt/hda2       auto   noauto,user,exec,dev,suid,rw,mode=777,umask=000 0 0

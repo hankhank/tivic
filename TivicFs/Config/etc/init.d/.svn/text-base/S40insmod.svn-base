@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# ext
+/sbin/insmod jbd
+/sbin/insmod ext2
+/sbin/insmod ext3
+
+# fuse
+/sbin/insmod fuse
+
+# pppoe
+/sbin/insmod slhc
+/sbin/insmod crc-ccitt
+/sbin/insmod ppp_generic
+/sbin/insmod ppp_synctty
+/sbin/insmod ppp_async
+/sbin/insmod pppox
+/sbin/insmod ppp_deflate
+/sbin/insmod pppoe
+

@@ -1,0 +1,33 @@
+## script to make char/block nodes.
+## contact CJ: msn   <godabc2001kimo@yahoo.com.tw>
+##             email <cj.wang@teltel.com>
+#!/bin/sh
+
+# func ###########################################
+mkCharDev()
+{
+   local sym devname total major i
+
+   i=0
+   sym=$1
+   devname=$2
+   total=$3
+
+   major=`/bin/grep -i $sym /proc/devices|/usr/bin/awk '{print $1}'`
+   [ -z "$major" ] && return 1
+
+   if [ -z "$total" ]; then
+      mknod /dev/${devname} c $major 0
+   else
+      while [ $i -lt $total ]; do
+         mknod /dev/${devname}$i c $major $i
+         i=$((i+1))
+      done
+   fi
+}
+
+# main ###########################################
+
+# /dev/gpio*
+mkCharDev gpio gpio 4
+

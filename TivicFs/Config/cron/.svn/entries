@@ -1,0 +1,31 @@
+9
+
+dir
+1026
+https://emei.eng.teltel.com/repos/contrib/trunk/CNS2100-LSDK-6.8.2/rootfs/config.normal/cron
+https://emei.eng.teltel.com/repos/contrib
+
+
+
+2009-06-06T08:10:56.578322Z
+867
+cjwang
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+b03bef08-0935-0410-8639-9716ca220230
+
+crontabs
+dir
+

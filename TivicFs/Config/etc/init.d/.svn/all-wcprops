@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/repos/contrib/!svn/ver/979/trunk/CNS2100-LSDK-6.8.2/rootfs/config.normal/etc/init.d
+END
+S40insmod
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/repos/contrib/!svn/ver/979/trunk/CNS2100-LSDK-6.8.2/rootfs/config.normal/etc/init.d/S40insmod
+END
+S50mknod
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/repos/contrib/!svn/ver/918/trunk/CNS2100-LSDK-6.8.2/rootfs/config.normal/etc/init.d/S50mknod
+END
+S10sys
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/contrib/!svn/ver/954/trunk/CNS2100-LSDK-6.8.2/rootfs/config.normal/etc/init.d/S10sys
+END
+rc
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/repos/contrib/!svn/ver/867/trunk/CNS2100-LSDK-6.8.2/rootfs/config.normal/etc/init.d/rc
+END
+rcS
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/repos/contrib/!svn/ver/917/trunk/CNS2100-LSDK-6.8.2/rootfs/config.normal/etc/init.d/rcS
+END
+S99rc
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/repos/contrib/!svn/ver/867/trunk/CNS2100-LSDK-6.8.2/rootfs/config.normal/etc/init.d/S99rc
+END
+S20crond
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/repos/contrib/!svn/ver/921/trunk/CNS2100-LSDK-6.8.2/rootfs/config.normal/etc/init.d/S20crond
+END
+rc.reboot
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/repos/contrib/!svn/ver/867/trunk/CNS2100-LSDK-6.8.2/rootfs/config.normal/etc/init.d/rc.reboot
+END

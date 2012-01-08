@@ -1,0 +1,4 @@
+#!/bin/sh
+[ ! -d /var/spool/cron/crontabs ]&& mkdir -p /var/spool/cron/crontabs
+/usr/sbin/crond -c /flash/cron/crontabs >/dev/null 2>&1
+
