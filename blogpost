@@ -1,7 +1,7 @@
-Recently purchased a tivic windrunner for a bit of fun. According to the box it comes with a software and an online service to interact with you're home windrunner from anywhere on the net. I like to run my own stuff and use my own services so I wanted to replace the custom OS with snakeOS.
-<h3>Setup</h3>
+Recently purchased a Tivic windrunner for a bit of fun. According to the box it comes with a software and an online service to interact with you're home windrunner from anywhere on the net. I like to run my own stuff and use my own services so I wanted to replace the custom OS with snakeOS.
+<h3>Discovery</h3>
 <ul style="position: relative; z-index: 0;"></ul>
-<h3>Step 1</h3>
+<h3>Port Scan</h3>
 Try and find any open services.
 [code]
 Starting Nmap 5.51 ( http://nmap.org ) at 2011-11-04 22:08 EST
@@ -15,16 +15,36 @@ PORT STATE SERVICE
 
 Nmap done: 1 IP address (1 host up) scanned in 6.89 seconds
 [/code]
+Nothing that interesting here.
 
-<h3>Step 2</h3>
+<h3>Traffic Sniffing</h3>
+Rather than let the Tivic wild on the net where its doing who knows what, I connected it directly to my laptops ethernet port and setup a vm
+to host a DNS and DHCP server. Limiting the Tivic to a tightly controlled network I could then control the Tivic's IP Address and the results of its DNS requests. 
+Dnsmasq was my choice for a DNS and DHCP server as it is a light weight and easy to configure.
 
-dnsmasq - host dhcp server
-tries to contact dns servers 202.96.128.86 &amp; 202.96.134.133 two different chinese servers looking for license.em.xunlei.com and t
+With wireshark running I discovered that after the Tivic is allocated an IP address it immediately attempts to phone home. The Tivic requests the DNS configured by DHCP to resolve the address prov.dhs.teltel.com
+If DHCP doesn't allocate a local DNS server the Tivic will send DNS request to either 202.96.128.86 or 202.96.134.133.
 
-MAC_ADDR=0023ce00002e http://prov.dhs.teltel.com/index.php
+If the Tivic Windrunner can resolve prov.dhs.teltel.com it makes a HTTP POST REQUEST to 
+http://prov.dhs.teltel.com/index.php with the devices macaddress as the post payload in the form as MAC_ADDR=002XXXXXXXXX
 
+The Tivic will also register a number of microsoft shared folders.
+
+<h3>Intercepting Requests</h3>
+I now had a starting point but I would need to know how the Teltel servers would respond to such requests. Rather than letting the Tivic go show wild online I started to proxy the
+requests. I would manually make the requests to the real servers and started to point the DNS requests to my local machines which would then hand back slightly modified responses.
+I particularly didn't want the Tivic to upgrade its firmware and potentially be locked out.
+
+A basic sequence is as follows
+
+Tivic -> Teltel
 [code]
-op
+POST MAC_ADDR=002XXXXXXXXX
+http://prov.dhs.teltel.com/index.php 
+[/code]
+
+Tivic <- Teltel
+[code]
 <!--?xml version='1.0' standalone='yes'?-->
 
 <header>FRED
@@ -37,10 +57,13 @@ https://prov.teltel.com/
 %
 [/code]
 
+Tivic -> Teltel
 [code]
-Full request URI: http://prov.teltel.com/?MAC_ADDR=0026cd00002f&amp;KT_KEY=JoIj1D87N3VupmbY59HPzGhUvsdQOykFde5866b0d355f070d685746ad16b84ea&amp;MY_IMAGE_FILE=DHS_M6_0909102305.ba
+GET
+http://prov.teltel.com/?MAC_ADDR=002XXXXXXXXX&amp;KT_KEY=JoIj1D87N3VupmbY59HPzGhUvsdQOykFde5866b0d355f070d685746ad16b84ea&amp;MY_IMAGE_FILE=DHS_M6_0909102305.ba
 [/code]
 
+Tivic <- Teltel
 [code]
 phone_number1=1000602425_AT_63.50.teltel.com
 pnpn_no=99000124
@@ -63,9 +86,69 @@ plugin_prov_url=http://kbsapi.teltel.com/KS_API.php
 plugin_verchk_interval=604800
 ice_disable=0
 gserv_info_url=http://ossapi.tsp.teltel.com/oss_api.php
-[/code]t
+[/code]
 
-Mount Config
+Tivic -> Teltel
+[code]
+GET
+http://download.tsp.teltel.com/dhs/firmware/starsemi/DHS_M6_0911061401.ba
+[/code]
+
+<h3>Pulling apart the Firmware</h3>
+The firmware for the Tivic is distributed as a binary blob with the unusual extension .ba. Using the unix tool 'file' doesn't return anymore
+information either. Using tools 'strings' however returns alot more interesting bits and pieces.
+
+[code]
+!teltel-dhs!
+start_install.sh#!/bin/sh
+# routine #######################################################
+# !cj! - killall process and confirm
+kill_proc()
+   local PROC_PID counter
+      PROC_PID=`$BUSYBOX pidof $1`
+         counter=0
+[/code]
+
+Looks as though there are some file names, strings and even bash scripts included in the firmware image. Using the hex view xxd we can see 
+that the firmware image starts with a magic string followed by some random data before a bash script starts. 
+
+[code]
+0000000: 2174 656c 7465 6c2d 6468 7321 be37 2a24  !teltel-dhs!.7*$
+0000010: 0000 0000 0310 c013 0000 0a64 2f00 0006  ...........d/...
+0000020: 70ca 0000 0670 bf0f 0006 0020 3800 7374  p....p..... 8.st
+0000030: 6172 745f 696e 7374 616c 6c2e 7368 2321  art_install.sh#!
+0000040: 2f62 696e 2f73 680a 0a23 2072 6f75 7469  /bin/sh..# routi
+0000050: 6e65 2023 2323 2323 2323 2323 2323 2323  ne #############
+0000060: 2323 2323 2323 2323 2323 2323 2323 2323  ################
+0000070: 2323 2323 2323 2323 2323 2323 2323 2323  ################
+0000080: 2323 2323 2323 2323 2323 0a0a 2320 2163  ##########..# !c
+0000090: 6a21 202d 206b 696c 6c61 6c6c 2070 726f  j! - killall pro
+00000a0: 6365 7373 2061 6e64 2063 6f6e 6669 726d  cess and confirm
+00000b0: 0a6b 696c 6c5f 7072 6f63 2829 0a7b 0a20  .kill_proc().{. 
+00000c0: 2020 6c6f 6361 6c20 5052 4f43 5f50 4944    local PROC_PID
+00000d0: 2063 6f75 6e74 6572 0a20 2020 5052 4f43   counter.   PROC
+[/code]
+
+Further examination usind xxd we discover that there are infact five file names included the in the firmware image start_install.sh, fw_install
+Config, Kernel and Rootfs. The first two are probably used to perform the update and the last three are the target images. 
+
+The format of the file seems to be [header][filename][file][filename][file]..[filename][file].
+The header more than likely contains checksum, versioning and file sizes for the contents of the firmware image. By doing some manual 
+calculations we find that the headers format is [magic word][checksum?][version?][filename size][file size]...
+
+At this point I was still unsure what the bytes immediately after the magic header represented. It wasn't until is started to craft
+my own firmware images and using a serial connection to the board did I receive errors of bad checksums. At that point I reverse engineered
+an executable from the RootFS to discover how they were calculating the checksum. They simply add bytewise the entire contents of the file.
+After doing this myself it was obvious an integer immediately after the magic header was the checksum. I am still unsure what the next portion
+represents but it is possibly version or even how many files are in the firmware image after the installation elf and script.
+
+I have created two python scripts which can be used to pack and unpack Tivic firmware images. Find them on my github as pack.py and unpack.py.
+
+<h3>Examining the pieces</h3>
+
+Config
+
+Mounting the Config partition
 [code]
 modprobe mtdblock
 modprobe jffs2
@@ -74,8 +157,9 @@ cat /proc/mtd
 dev:    size   erasesize  name
 mtd0: 01388000 00020000 "mtdram test device"
 dd if=Config of=/dev/mtdblock0
-mount -t jffs2 /dev/mtdblock0 /mnt
+mount -t jffs2 /dev/mtdblock0 mnt
 [/code]
+Contents
 [code]
 cron/  etc/  home/  root/
 
@@ -101,6 +185,7 @@ pppoe.sh*  rc@  rc.reboot*  rcS*  S10sys*  S20crond*  S40insmod*  S50mknod*  S99
 ./root:
 config/  plugins/
 
+
 ./root/config:
 button.config@  kbs.config  led.config@  sys.conf  upnp.conf@
 
@@ -111,7 +196,450 @@ button.config@  kbs.config  led.config@  sys.conf  upnp.conf@
 Kernel
 [code]
 file Kernel 
-
 Kernel: u-boot legacy uImage, Linux Kernel Image, Linux/ARM, OS Kernel Image (Not compressed), 1056768 bytes, Tue Feb  9 20:43:22 2010, Load Address: 0x00100000, Entry Point: 0x00100040, Header CRC: 0x4D1B3158, Data CRC: 0xAA76B039
 [/code]
+
+RootFS
+Weird squashfs build that can be found with firmware-modkit. It nicely runs through a multitude of old and discontinued squashfs builds. The result was squashfs-3.3-lzma.
+The file system break down is below. Nothing too exciting
+[code]
+.:
+bin/  dev/  etc@  flash/  home@  kbsconf/  lib/  linuxrc@  media/  mnt/  mnt2/  opt/  proc/  root@  sbin/  sys/  tmp@  usr/  var/
+
+./bin:
+ash@      chgrp@  cp@    df@     egrep@  fw_printenv*  grep@      kill@   ls@     mktemp@  mv@       pidof@  pwd@    sed@    sync@   true@    usleep@  watch@
+busybox*  chmod@  date@  dmesg@  false@  fw_setenv@    hostname@  ln@     mkdir@  more@    netstat@  ping@   rm@     sh@     tar@    umount@  vi@
+cat@      chown@  dd@    echo@   fgrep@  getopt@       ip@        login@  mknod@  mount@   nice@     ps@     rmdir@  sleep@  touch@  uname@   vsntp*
+
+./dev:
+pts/  root@  snd/  sound/  usb/
+
+./dev/pts:
+
+./dev/snd:
+
+./dev/sound:
+
+./dev/usb:
+
+./flash:
+etc/
+
+./flash/etc:
+group  host.conf  init.d/  inittab  passwd  services  version
+
+./flash/etc/init.d:
+rc.sysinit*
+
+./kbsconf:
+button.config  led.config
+
+./lib:
+fiqtest.ko                                    libcrypto.so@        libipc.so@            libpthread-0.9.28.so*  libstdc++.so@        libutil-0.9.28.so*
+ld-uClibc-0.9.28.so*                          libcrypto.so.0@      libipc.so.0@          libpthread.so@         libstdc++.so.5@      libutil.so@
+ld-uClibc.so.0@                               libcrypto.so.0.9.8*  libipc.so.0.0.0*      libpthread.so.0@       libstdc++.so.5.0.7*  libutil.so.0@
+libboost_date_time-gcc34-mt-1_38.so@          libcrypt.so@         libkbsutil.so@        libresolv-0.9.28.so*   libstdc++.so.6@      libz.so@
+libboost_date_time-gcc34-mt-1_38.so.1.38.0*   libcrypt.so.0@       libkbsutil.so.0@      libresolv.so@          libstdc++.so.6.0.3*  libz.so.1@
+libboost_filesystem-gcc34-mt-1_38.so@         libc.so@             libkbsutil.so.0.0.0*  libresolv.so.0@        libtutil.so@         libz.so.1.2.3*
+libboost_filesystem-gcc34-mt-1_38.so.1.38.0*  libc.so.0@           libm-0.9.28.so*       librt-0.9.28.so*       libtutil.so.0@       modules/
+libboost_system-gcc34-mt-1_38.so@             libdl-0.9.28.so*     libm.so@              librt.so@              libtutil.so.0.0.0*
+libboost_system-gcc34-mt-1_38.so.1.38.0*      libdl.so@            libm.so.0@            librt.so.0@            libuClibc-0.9.28.so
+libboost_thread-gcc34-mt-1_38.so@             libdl.so.0@          libnsl-0.9.28.so*     libssl.so@             libudt4.so@
+libboost_thread-gcc34-mt-1_38.so.1.38.0*      libgcc_s.so@         libnsl.so@            libssl.so.0@           libudt4.so.0@
+libcrypt-0.9.28.so*                           libgcc_s.so.1        libnsl.so.0@          libssl.so.0.9.8*       libudt4.so.0.0.0*
+
+./lib/modules:
+2.6.16-star/
+
+./lib/modules/2.6.16-star:
+build@   modules.alias      modules.ccwmap  modules.dep.bin      modules.inputmap   modules.ofmap   modules.seriomap  modules.symbols.bin  source@
+kernel/  modules.alias.bin  modules.dep     modules.ieee1394map  modules.isapnpmap  modules.pcimap  modules.symbols   modules.usbmap
+
+./lib/modules/2.6.16-star/kernel:
+drivers/  fs/  lib/  net/
+
+./lib/modules/2.6.16-star/kernel/drivers:
+cdrom/  ide/  net/  star/
+
+./lib/modules/2.6.16-star/kernel/drivers/cdrom:
+cdrom.ko
+
+./lib/modules/2.6.16-star/kernel/drivers/ide:
+ide-cd.ko  ide-core.ko  ide-disk.ko  ide-generic.ko  pci/
+
+./lib/modules/2.6.16-star/kernel/drivers/ide/pci:
+generic.ko  it821x.ko  pdc202xx_new.ko
+
+./lib/modules/2.6.16-star/kernel/drivers/net:
+ppp_async.ko  ppp_deflate.ko  ppp_generic.ko  pppoe.ko  pppox.ko  ppp_synctty.ko  slhc.ko
+
+./lib/modules/2.6.16-star/kernel/drivers/star:
+str8100/
+
+./lib/modules/2.6.16-star/kernel/drivers/star/str8100:
+inthandler.ko
+
+./lib/modules/2.6.16-star/kernel/fs:
+ext2/  ext3/  fuse/  jbd/  lockd/  nfs/
+
+./lib/modules/2.6.16-star/kernel/fs/ext2:
+ext2.ko
+
+./lib/modules/2.6.16-star/kernel/fs/ext3:
+ext3.ko
+
+./lib/modules/2.6.16-star/kernel/fs/fuse:
+fuse.ko
+
+./lib/modules/2.6.16-star/kernel/fs/jbd:
+jbd.ko
+
+./lib/modules/2.6.16-star/kernel/fs/lockd:
+lockd.ko
+
+./lib/modules/2.6.16-star/kernel/fs/nfs:
+nfs.ko
+
+./lib/modules/2.6.16-star/kernel/lib:
+crc-ccitt.ko
+
+./lib/modules/2.6.16-star/kernel/net:
+sunrpc/
+
+./lib/modules/2.6.16-star/kernel/net/sunrpc:
+sunrpc.ko
+
+./media:
+media0/  media1/  media2/  media3/
+
+./media/media0:
+part0/  part1/  part2/  part3/  part4/  part5/  part6/  part7/
+
+./media/media0/part0:
+
+./media/media0/part1:
+
+./media/media0/part2:
+
+./media/media0/part3:
+
+./media/media0/part4:
+
+./media/media0/part5:
+
+./media/media0/part6:
+
+./media/media0/part7:
+
+./media/media1:
+part0/  part1/  part2/  part3/  part4/  part5/  part6/  part7/
+
+./media/media1/part0:
+
+./media/media1/part1:
+
+./media/media1/part2:
+
+./media/media1/part3:
+
+./media/media1/part4:
+
+./media/media1/part5:
+
+./media/media1/part6:
+
+./media/media1/part7:
+
+./media/media2:
+part0/  part1/  part2/  part3/  part4/  part5/  part6/  part7/
+
+./media/media2/part0:
+
+./media/media2/part1:
+
+./media/media2/part2:
+
+./media/media2/part3:
+
+./media/media2/part4:
+
+./media/media2/part5:
+
+./media/media2/part6:
+
+./media/media2/part7:
+
+./media/media3:
+part0/  part1/  part2/  part3/  part4/  part5/  part6/  part7/
+
+./media/media3/part0:
+
+./media/media3/part1:
+
+./media/media3/part2:
+
+./media/media3/part3:
+
+./media/media3/part4:
+
+./media/media3/part5:
+
+./media/media3/part6:
+
+./media/media3/part7:
+
+./mnt:
+hda1/  hda2/  usbdev/  usbdev1/  usbdev2/  usbdev3/  usbdev4/  usbdev5/
+
+./mnt/hda1:
+
+./mnt/hda2:
+
+./mnt/usbdev:
+
+./mnt/usbdev1:
+
+./mnt/usbdev2:
+
+./mnt/usbdev3:
+
+./mnt/usbdev4:
+
+./mnt/usbdev5:
+
+./mnt2:
+
+./opt:
+firmware/
+
+./opt/firmware:
+full_ver  version
+
+./proc:
+
+./sbin:
+buttonpoll*  fw_unpack*     halt@      insmod@   klogd@     lsmod@        manu_update_FW.sh*  ntfs-3g*     poweroff@  reboot@       route@    swapon@    ttwan.sh*  vconfig@
+cronop*      fw_unpack.idb  ifconfig@  kbs*      ledflash*  macktkey*     modprobe@           parseMD5*    pppd*      rebootFW.sh*  svsd*     syslogd@   udhcpc@    watchdog@
+fdisk@       getty@         init@      killkbs*  logread@   manu_nfs.sh*  msgqueue*           pivot_root@  pppoe*     rmmod@        swapoff@  ttsys.sh*  upnpd*
+
+./sys:
+
+./usr:
+bin/  lib/  local/  sbin/  share/
+
+./usr/bin:
+[@    basename@  crontab@  dos2unix@  expr@  ftpget@  head@     iperf*    md5sum@  readlink@  sort@     tail@  tftp@  tr@          uniq@      wc@     whoami@
+[[@   clear@     cut@      du@        find@  ftpput@  hexdump@  killall@  nc@      reset@     strings@  tee@   time@  traceroute@  unix2dos@  wget@   xargs@
+awk@  cmp@       dirname@  env@       free@  fuser@   id@       logger@   printf@  rz*        sz*       test@  top@   tty@         uptime@    which@  yes@
+
+./usr/lib:
+libcrypt.so@  libc.so@  libdl.so@  libm.so@  libnsl.so@  libpthread.so@  libresolv.so@  librt.so@  libutil.so@
+
+./usr/local:
+etc/  samba/
+
+./usr/local/etc:
+init.d/  samba/
+
+./usr/local/etc/init.d:
+rc*  tt_firmware_update.sh*
+
+./usr/local/etc/samba:
+dfree*  samba-init.d*  smb.conf  smbpasswd  ttsmb-init.d*
+
+./usr/local/samba:
+bin/  etc@  lib/  man/  sbin/  share/
+
+./usr/local/samba/bin:
+
+./usr/local/samba/lib:
+
+./usr/local/samba/man:
+
+./usr/local/samba/sbin:
+nmbd*  smbd*
+
+./usr/local/samba/share:
+codepages/
+
+./usr/local/samba/share/codepages:
+codepage.936  codepage.950  unicode_map.936  unicode_map.950  unicode_map.ISO8859-1
+
+./usr/sbin:
+brctl*  chroot@  crond@  mtd_debug*  readprofile@  telnetd@
+
+./usr/share:
+udhcpc/
+
+./usr/share/udhcpc:
+default.script*
+
+./var:
+run/  tmp/
+
+./var/run:
+
+./var/tmp:
+[/code]
+
+output from /etc/passwd
+root:$1$$sls09PxtVFLVzuN8qlAiw/:0:0:root:/root:/bin/ash 
+ftp:*:95:95::/var/ftp: 
+nobody:x:506:507::/var/tmp/media:
+
+UBoot Info
+
+Star Equuleus # base
+Base Address: 0x00000000
+Star Equuleus # bdinfo
+arch_number = 0x0000032A
+env_t       = 0x00000000
+boot_params = 0x00000100
+DRAM bank   = 0x00000000
+-> start    = 0x00000000
+-> size     = 0x04000000
+ethaddr     = 00:26:CD:00:00:2F
+ip_addr     = 192.168.0.202
+baudrate    = 38400 bps
+Star Equuleus # coninfo
+List of available devices:
+serial   80000003 SIO stdin stdout stderr
+Star Equuleus # flinfo
+DataFlash: MX 25L128
+Page Count: 65536
+Page Size: 256
+Size: 16777216 bytes
+Logical Address: 0x30000000
+Area 0: 30000000 to 3002FFFF
+Area 1: 30030000 to 3003FFFF
+Area 2: 30040000 to 3023FFFF
+Area 3: 30240000 to 30FFFFFF
+
+Star Equuleus # printenv
+bootdelay=3
+baudrate=38400
+cpu_clock=250
+bootargs_d=run romboot_d args
+bootdelay=3
+baudrate=38400
+guardword=null
+pppwild=wt3@wagaly.net
+alphablocker=null
+uboot_addr=0x30000000
+uboot_size=0x20000
+uboot_addr_end=0x3001FFFF
+upimage=0
+bootimage=0
+deviceid=DEVICE_ID
+mem_boot_addr=0x100000
+uboot_env_size=0x20000
+uboot_env_offset=0xF80000
+kernel_addr=0x30020000
+kernel_size=0x120000
+kernel_offset=0x20000
+kernel_addr_end=0x3011ffff
+rootfs_addr=0x30140000
+rootfs_size=0x0500000
+rootfs_offset=0x140000
+rootfs_addr_end=0x305dffff
+config_addr=0x30640000
+config_size=0x0500000
+config_offset=0x640000
+config_addr_end=0x30abffff
+firmware_addr=0x30020000
+firmware_addr_end=0x30ABFFFF
+kernel_addr_d=0x30AE0000
+kernel_size_d=0x100000
+kernel_offset_d=0xAE0000
+kernel_addr_end_d=0x30BDFFFF
+rootfs_addr_d=0x30BE0000
+rootfs_size_d=0x2C0000
+rootfs_offset_d=0xBE0000
+rootfs_addr_end_d=0x30E9FFFF
+config_addr_d=0x30EA0000
+config_size_d=0xE0000
+config_offset_d=0xEA0000
+config_addr_end_d=0x30F7FFFF
+firmware_addr_d=0x30AE0000
+firmware_addr_end_d=0x30F7FFFF
+dev_size=0x20000
+dev_offset=0xFa0000
+tty=ttyS0
+inputfreq=300M0
+rootfs=squashfs
+rootdev=/dev/mtdblock2 ro
+zip_format=lzma
+memtmp_addr=1000000
+mem_size=64M
+miscz=echo \c
+miscz_d=echo \c
+download=tftpboot
+uimagename=u-boot.bin
+TRCD=5
+LB=33
+mlb=mw.l 19c04000 $(LB)
+mtrcd=mw.l 19c04024 $(TRCD)
+filesize=0x1c1e8
+fileaddr=100000
+flashsize=0x01000000
+upsuccess=setenv upfail;saveenv
+bootarg=root=/dev/mtdblock2 rootfstype=squashfs U-Boot_offset=0x0 U-Boot_size=0x1000000 Kernel_offset=0x20000 Kernel_size=0x120000 RootFS_offset=0x140000 RootFS_size=0x500000 Config_offset=0x640000 Config_size=0x480000 Kimage_offset=0xAE0000 Kimage_size=0x100000 Rimage_offset=0xBE0000 Rimage_size=0x2C0000 Cimage_offset=0xEA0000 Cimage_size=0xE0000 u-boot-env_offset=0xF80000 u-boot-env_size=0x20000 dev_offset=0xFA0000 dev_size=0x20000
+bootarg_d=root=/dev/mtdblock5 rootfstype=squashfs U-Boot_offset=0x0 U-Boot_size=0x1000000 Kernel_offset=0x20000 Kernel_size=0x120000 RootFS_offset=0x140000 RootFS_size=0x500000 Config_offset=0x640000 Config_size=0x480000 Kimage_offset=0xAE0000 Kimage_size=0x100000 Rimage_offset=0xBE0000 Rimage_size=0x2C0000 Cimage_offset=0xEA0000 Cimage_size=0xE0000 u-boot-env_offset=0xF80000 u-boot-env_size=0x20000 dev_offset=0xFA0000 dev_size=0x20000
+boot_cmd=set bootargs $(bootarg);cp.b $(kernel_addr) $(mem_boot_addr) $(kernel_size);bootm $(mem_boot_addr)
+boot_cmd_d=set bootargs $(bootarg_d);cp.b $(kernel_addr_d) $(mem_boot_addr) $(kernel_size_d);bootm $(mem_boot_addr)
+erase_kimage_d=erase $(kernel_addr_d) $(kernel_addr_end_d)
+erase_rimage_d=erase $(rootfs_addr_d) $(rootfs_addr_end_d)
+erase_cimage_d=erase $(config_addr_d) $(config_addr_end_d)
+erase_fimage_d=erase $(firmware_addr_d) $(firmware_addr_end_d)
+kimage_d=$(download) $(memtmp_addr) Kimage$(USER).$(zip_format);run erase_kimage_d;cp.b $(memtmp_addr) $(kernel_addr_d) $(filesize)
+rimage_d=$(download) $(memtmp_addr) Rimage$(USER).$(rootfs);run erase_rimage_d;cp.b $(memtmp_addr) $(rootfs_addr_d) $(filesize)
+cimage_d=$(download) $(memtmp_addr) Cimage$(USER).jffs2;run erase_cimage_d;cp.b $(memtmp_addr) $(config_addr_d) $(filesize)
+fimage_d=$(download) $(memtmp_addr) BASS_ONE$(USER);run erase_fimage_d;cp.b $(memtmp_addr) $(firmware_addr_d) $(filesize); run upsuccess
+mtd_id=5VT13XX_mapped_flash
+partition=setenv mtd_parts $(mtd_id):$(flashsize)@0x0(U-Boot),$(kernel_size)@$(kernel_offset)(Kernel),$(rootfs_size)@$(rootfs_offset)(RootFS),$(config_size)@$(config_offset)(Config),$(kernel_size_d)@$(kernel_offset_d)(Kimage),$(rootfs_size_d)@$(rootfs_offset_d)(Rimage),$(config_size_d)@$(config_offset_d)(Cimage),$(uboot_env_size)@$(uboot_env_offset)(u-boot-env),$(dev_size)@$(dev_offset)(dev)
+partition_d=setenv mtd_parts $(mtd_id):$(flashsize)@0x0(U-Boot),$(kernel_size_d)@$(kernel_offset_d)(Kernel),$(rootfs_size_d)@$(rootfs_offset_d)(RootFS),$(config_size_d)@$(config_offset_d)(Config),$(kernel_size)@$(kernel_offset)(Kimage),$(rootfs_size)@$(rootfs_offset)(Rimage),$(config_size)@$(config_offset)(Cimage),$(uboot_env_size)@$(uboot_env_offset)(u-boot-env),$(dev_size)@$(dev_offset)(dev)
+rootpath=/opt/montavista/pro/devkit/arm/v4t_le/target/
+nfsargs=setenv bootargs nfsroot=$(serverip):$(rootpath)
+addip=setenv bootargs $(bootargs) ip=$(ipaddr):$(serverip):$(gatewayip):$(netmask):$(hostname):$(netdev):off
+misca=setenv bootargs $(bootargs) root=$(rootdev)
+miscb=setenv bootargs $(bootargs) cpufreq=$(inputfreq)
+miscc=setenv bootargs $(bootargs) rootfstype=$(rootfs)
+miscd=setenv bootargs $(bootargs) mem=$(mem_size)
+misce=setenv bootargs $(bootargs) console=$(tty),$(baudrate)
+miscf=setenv bootargs $(bootargs) mtdparts=$(mtd_parts)
+miscg=setenv bootargs $(bootargs) $(pci_on)
+misc=run misca miscb miscc miscd misce miscf miscg miscz
+nfsboot=run nfsargs addip misc;bootm $(kernel_addr)
+ramboot=run partition misc;bootm $(kernel_addr) $(rootfs_addr)
+romboot=run partition misc mlb mtrcd;bootm $(kernel_addr)
+romboot_d=set bootargs $(bootarg_d);cp.b $(kernel_addr_d) $(mem_boot_addr) $(kernel_size_d);bootm $(mem_boot_addr)
+erase_uimage=erase $(uboot_addr) $(uboot_addr_end)
+uimage=$(download) $(memtmp_addr) $(uimagename);run erase_uimage;cp.b $(memtmp_addr) $(uboot_addr) $(filesize)
+erase_kimage=erase $(kernel_addr) $(kernel_addr_end)
+erase_rimage=erase $(rootfs_addr) $(rootfs_addr_end)
+erase_cimage=erase $(config_addr) $(config_addr_end)
+kimage=$(download) $(memtmp_addr) Kimage$(USER).$(zip_format);run erase_kimage;cp.b $(memtmp_addr) $(kernel_addr) $(filesize)
+rimage=$(download) $(memtmp_addr) Rimage$(USER).$(rootfs);run erase_rimage;cp.b $(memtmp_addr) $(rootfs_addr) $(filesize)
+cimage=$(download) $(memtmp_addr) Cimage$(USER).jffs2;run erase_cimage;cp.b $(memtmp_addr) $(config_addr) $(filesize)
+erase_fimage=erase $(firmware_addr) $(firmware_addr_end)
+fimage=$(download) $(memtmp_addr) BASS_ONE$(USER);run erase_fimage;cp.b $(memtmp_addr) $(firmware_addr) $(filesize); run upsuccess
+netmask=255.255.255.0
+gateway=192.168.0.1
+bootargs=root=/dev/mtdblock5 rootfstype=squashfs U-Boot_offset=0x0 U-Boot_size=0x1000000 Kernel_offset=0x20000 Kernel_size=0x120000 RootFS_offset=0x140000 RootFS_size=0x500000 Config_offset=0x640000 Config_size=0x480000 Kimage_offset=0xAE0000 Kimage_size=0x100000 Rimage_offset=0xBE0000 Rimage_size=0x2C0000 Cimage_offset=0xEA0000 Cimage_size=0xE0000 u-boot-env_offset=0xF80000 u-boot-env_size=0x20000 dev_offset=0xFA0000 dev_size=0x20000
+ipaddr=192.168.0.202
+serverip=192.168.0.164
+USER=.normal
+model=TT6000
+psiptn=99000200
+def_passwd=123
+ethaddr=00:26:cd:00:00:2f
+ktkey=JoIj1D87N3VupmbY59HPzGhUvsdQOykFde5866b0d355f070d685746ad16b84ea
+model_no=D10
+psiptn_no=99000124
+def_local_passwd=8095731de192dc54
+bootcmd=run boot_cmd
+stdin=serial
+stdout=serial
+stderr=serial
+
 
