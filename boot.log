@@ -1,0 +1,371 @@
+U-Boot 1.1.4 (Jun 30 2009 - 14:51:55)
+
+U-Boot code: 00000000 -> 0001C544  BSS: -> 00021A9C
+IRQ Stack: 00e5ff7c
+FIQ Stack: 00e5ef7c
+RAM Configuration:
+Bank #0: 00000000 64 MB
+Flash Manufacturer: MX
+Flash: 16 MB
+DataFlash: MX 25L128
+Page Count: 65536
+Page Size: 256
+Size: 16777216 bytes
+Logical Address: 0x30000000
+Area 0: 30000000 to 3002FFFF
+Area 1: 30030000 to 3003FFFF
+Area 2: 30040000 to 3023FFFF
+Area 3: 30240000 to 30FFFFFF
+********** teltel **********
+upstatus = run boot_cmd
+upfail   = 0
+****************************
+In:    serial
+Out:   serial
+Err:   serial
+PLL clock at 250MHz
+CPU clock at 250MHz
+AHB clock at 125MHz
+APB clock at 62MHz
+Hit any key to stop autoboot:  0
+## Booting image at 00100000 ...
+Image Name:   Linux Kernel Image
+Image Type:   ARM Linux Kernel Image (uncompressed)
+Data Size:    1056736 Bytes =  1 MB
+Load Address: 00100000
+Entry Point:  00100040
+Verifying Checksum ... OK
+XIP Kernel Image ... OK
+
+Starting kernel ...
+
+Uncompressing Linux......................................................................................................... done, booting the kernel.
+Linux version 2.6.16-star (root@build-machine) (gcc version 3.4.6) #46 Thu Sep 10 23:05:53 CST 2009
+CPU: FA526id(wb) [66015261] revision 1 (ARMv4)
+Machine: STAR STR8100
+Warning: bad configuration page, trying to continue
+Ignoring unrecognised tag 0x00000000
+Memory policy: ECC disabled, Data cache writeback
+CPU0: D VIVT write-back cache
+CPU0: I cache: 8192 bytes, associativity 2, 16 byte lines, 256 sets
+CPU0: D cache: 8192 bytes, associativity 2, 16 byte lines, 256 sets
+PLL clock at 250MHz
+CPU clock at 250MHz
+AHB clock at 125MHz
+APB clock at 62MHz
+Built 1 zonelists
+Kernel command line: root=/dev/mtdblock2 rootfstype=squashfs
+PID hash table entries: 512 (order: 9, 8192 bytes)
+Dentry cache hash table entries: 16384 (order: 4, 65536 bytes)
+Inode-cache hash table entries: 8192 (order: 3, 32768 bytes)
+Memory: 64MB = 64MB total
+Memory: 62208KB available (2192K code, 378K data, 92K init)
+Mount-cache hash table entries: 512
+CPU: Testing write buffer coherency: ok
+NET: Registered protocol family 16
+PCI clock at 33M
+PCI: bus0: Fast back to back transfers disabled
+PCI Bridge not found
+PCI map irq: 00:00.00 slot 0, pin 1, irq: 0
+SCSI subsystem initialized
+usbcore: registered new driver usbfs
+usbcore: registered new driver hub
+pcm_init_module:
+NetWinder Floating Point Emulator V0.97 (extended precision)
+squashfs: version 3.4 (2008/08/26) Phillip Lougher
+squashfs: LZMA suppport for slax.org by jro
+JFFS2 version 2.2. (NAND) (C) 2001-2003 Red Hat, Inc.
+io scheduler noop registered (default)
+gpio: regist /dev/gpio dev result=0
+GPIO interrupt handler install ok.
+str8100_rtc.o: rtc module version 1.0.0
+str8100_wdt.o: watchdog module version 1.0.1
+Serial: 8250/16550 driver $Revision: 1.90 $ 2 ports, IRQ sharing disabled
+serial8250: ttyS0 at MMIO 0x78000000 (irq = 9) is a 16550A
+serial8250: ttyS1 at MMIO 0x78800000 (irq = 10) is a 16550A
+Star NIC Driver(for Linux Kernel 2.6) - Star Semiconductor
+rxring.vir_addr=0xFFC10000 rxring.phy_addr=0x03E51000
+txring.vir_addr=0xFFC11000 txring.phy_addr=0x03E52000
+Star Internal PHY
+MAC Addr: 08:0a:0b:0c:0d:0e
+
+star_nic_init_module: internal phy patch included.
+star_nic_init_module: scatter/gather enabled.
+
+STR8100 SPI: init
+m25p80 spi1.0: m25p128 (16384 Kbytes)
+Creating 9 MTD partitions on "m25p80":
+0x00000000-0x01000000 : "U-Boot"
+0x00020000-0x00140000 : "Kernel"
+0x00140000-0x00640000 : "RootFS"
+0x00640000-0x00ac0000 : "Config"
+0x00ae0000-0x00be0000 : "Kimage"
+0x00be0000-0x00ea0000 : "Rimage"
+0x00ea0000-0x00f80000 : "Cimage"
+0x00f80000-0x00fa0000 : "u-boot-env"
+0x00fa0000-0x00fc0000 : "dev"
+str8100-ehci str8100-ehci: str8100-ehci
+str8100-ehci str8100-ehci: new USB bus registered, assigned bus number 1
+str8100-ehci str8100-ehci: irq 24, io mem 0xcc000000
+str8100-ehci str8100-ehci: USB 0.0 started, EHCI 1.00, driver 10 Dec 2004
+usb usb1: configuration #1 chosen from 1 choice
+hub 1-0:1.0: USB hub found
+hub 1-0:1.0: 2 ports detected
+ohci_hcd: 2005 April 22 USB 1.1 'Open' Host Controller (OHCI) Driver (STR8100)
+str8100-ohci str8100-ohci: str8100-ohci
+str8100-ohci str8100-ohci: new USB bus registered, assigned bus number 2
+str8100-ohci str8100-ohci: irq 23, io mem 0xc4000000
+usb usb2: configuration #1 chosen from 1 choice
+hub 2-0:1.0: USB hub found
+hub 2-0:1.0: 2 ports detected
+Initializing USB Mass Storage driver...
+usbcore: registered new driver usb-storage
+USB Mass Storage support registered.
+str8100_int28vbus_inthandler_init:
+NET: Registered protocol family 2
+IP route cache hash table entries: 1024 (order: 0, 4096 bytes)
+TCP established hash table entries: 4096 (order: 2, 16384 bytes)
+TCP bind hash table entries: 4096 (order: 2, 16384 bytes)
+TCP: Hash tables configured (established 4096 bind 4096)
+TCP reno registered
+TCP bic registered
+NET: Registered protocol family 1
+NET: Registered protocol family 17
+NET: Registered protocol family 15
+VFS: Mounted root (squashfs filesystem) readonly.
+Freeing init memory: 92K
+Mounting root fs rw ...
+Jan  1 08:00:10 crond[794]: crond 2.3.2 dillon, started, log level 8
+
+fuse init (API version 7.8)
+fuse distribution version: 2.7.4
+CSLIP: code copyright 1989 Regents of the University of California
+PPP generic driver version 2.4.2
+NET: Registered protocol family 24
+PPP Deflate Compression module registered
+##################################################
+#                Running Normal RC               #
+##################################################
+## Error: "isqa" not defined
+MAC Addr: 00:26:cd:00:00:2f
+eth0:star_nic_lan_open
+star_nic_enable: starting patch check.
+* start [udhcpc] ...
+info, udhcpc (v1.2.2) started
+debug, Sending discover...
+entering svsd
+
+Welcome to (none) (armv4l-Linux-2.6.16-star@ttyS0/b)
+Starsemi ramdisk 1.0
+
+Copyright (C) 2005 Starsemi ramdisk 1.0
+Released under GNU GPL
+
+(none) login: mkdir: Cannot create directory `/mnt2/.dhs/': Operation not permitted
+the mac = []
+the ktkey = []
+the mac = [0026cd00002f]
+the ktkey = [JoIj1D87N3VupmbY59HPzGhUvsdQOykFde5866b0d355f070d685746ad16b84ea]
+the mac = [0026cd00002f]
+the ktkey = [JoIj1D87N3VupmbY59HPzGhUvsdQOykFde5866b0d355f070d685746ad16b84ea]
+send success
+08:00:24 DEBUG:tools_util.c:125 get mac addr = [0026cd00002f]
+08:00:24 DEBUG:tools_util.c:561 url= [http://prov.dhs.teltel.com]
+08:00:24 DEBUG:tools_util.c:577 hostname = [prov.dhs.teltel.com]
+08:00:24 DEBUG:tools_util.c:597 post send data = [POST /index.php HTTP/1.0
+Accept: */*
+HOST: prov.dhs.teltel.com
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 21
+
+MAC_ADDR=0026cd00002f]
+08:00:24 DEBUG:tools_util.c:203 server url = [http://prov.dhs.teltel.com]
+08:00:24 DEBUG:tools_util.c:152 Calloc size = [20]
+08:00:24 DEBUG:tools_util.c:216 server = [prov.dhs.teltel.com]
+
+U-Boot 1.1.4 (Jun 30 2009 - 14:51:55)
+
+U-Boot code: 00000000 -> 0001C544  BSS: -> 00021A9C
+IRQ Stack: 00e5ff7c
+FIQ Stack: 00e5ef7c
+RAM Configuration:
+Bank #0: 00000000 64 MB
+Flash Manufacturer: MX
+Flash: 16 MB
+DataFlash: MX 25L128
+Page Count: 65536
+Page Size: 256
+Size: 16777216 bytes
+Logical Address: 0x30000000
+Area 0: 30000000 to 3002FFFF
+Area 1: 30030000 to 3003FFFF
+Area 2: 30040000 to 3023FFFF
+Area 3: 30240000 to 30FFFFFF
+********** teltel **********
+upstatus = run boot_cmd
+upfail   = 0
+****************************
+In:    serial
+Out:   serial
+Err:   serial
+PLL clock at 250MHz
+CPU clock at 250MHz
+AHB clock at 125MHz
+APB clock at 62MHz
+Hit any key to stop autoboot:  0
+## Booting image at 00100000 ...
+Image Name:   Linux Kernel Image
+Image Type:   ARM Linux Kernel Image (uncompressed)
+Data Size:    1056736 Bytes =  1 MB
+Load Address: 00100000
+Entry Point:  00100040
+Verifying Checksum ... OK
+XIP Kernel Image ... OK
+
+Starting kernel ...
+
+Uncompressing Linux......................................................................................................... done, booting the kernel.
+Linux version 2.6.16-star (root@build-machine) (gcc version 3.4.6) #46 Thu Sep 10 23:05:53 CST 2009
+CPU: FA526id(wb) [66015261] revision 1 (ARMv4)
+Machine: STAR STR8100
+Warning: bad configuration page, trying to continue
+Ignoring unrecognised tag 0x00000000
+Memory policy: ECC disabled, Data cache writeback
+CPU0: D VIVT write-back cache
+CPU0: I cache: 8192 bytes, associativity 2, 16 byte lines, 256 sets
+CPU0: D cache: 8192 bytes, associativity 2, 16 byte lines, 256 sets
+PLL clock at 250MHz
+CPU clock at 250MHz
+AHB clock at 125MHz
+APB clock at 62MHz
+Built 1 zonelists
+Kernel command line: root=/dev/mtdblock2 rootfstype=squashfs
+PID hash table entries: 512 (order: 9, 8192 bytes)
+Dentry cache hash table entries: 16384 (order: 4, 65536 bytes)
+Inode-cache hash table entries: 8192 (order: 3, 32768 bytes)
+Memory: 64MB = 64MB total
+Memory: 62208KB available (2192K code, 378K data, 92K init)
+Mount-cache hash table entries: 512
+CPU: Testing write buffer coherency: ok
+NET: Registered protocol family 16
+PCI clock at 33M
+PCI: bus0: Fast back to back transfers disabled
+PCI Bridge not found
+PCI map irq: 00:00.00 slot 0, pin 1, irq: 0
+SCSI subsystem initialized
+usbcore: registered new driver usbfs
+usbcore: registerednuew driver hub
+pcm_init_module:
+NetWinder Floating Point Emulator V0.97 (extended precision)
+squashfs: version 3.4 (2008/08/26) Phillip Lougher
+squashfs: LZMA suppport for slax.org by jro
+JFFS2 version 2.2. (NAND) (C) 2001-2003 Red Hat, Inc.
+io scheduler noop registered (default)
+gpio: regist /dev/gpio dev result=0
+GPIO interrupt handler install ok.
+str8100_rtc.o: rtc module version 1.0.0
+str8100_wdt.o: watchdog module version 1.0.1
+Serial: 8250/16550 driver $Revision: 1.90 $ 2 ports, IRQ sharing disabled
+serial8250: ttyS0 at MMIO 0x78000000 (irq = 9) is a 16550A
+serial8250: ttyS1 at MMIO 0x78800000 (irq = 10) is a 16550A
+Star NIC Driver(for Linux Kernel 2.6) - Star Semiconductor
+rxring.vir_addr=0xFFC10000 rxring.phy_addr=0x03E51000
+txring.vir_addr=0xFFC11000 txring.phy_addr=0x03E52000
+Star Internal PHY
+MAC Addr: 08:0a:0b:0c:0d:0e
+
+star_nic_init_module: internal phy patch included.
+star_nic_init_module: scatter/gather enabled.
+
+STR8100 SPI: init
+m25p80 spi1.0: m25p128 (16384 Kbytes)
+Creating 9 MTD partitions on "m25p80":
+0x00000000-0x01000000 : "U-Boot"
+0x00020000-0x00140000 : "Kernel"
+0x00140000-0x00640000 : "RootFS"
+0x00640000-0x00ac0000 : "Config"
+0x00ae0000-0x00be0000 : "Kimage"
+0x00be0000-0x00ea0000 : "Rimage"
+0x00ea0000-0x00f80000 : "Cimage"
+0x00f80000-0x00fa0000 : "u-boot-env"
+0x00fa0000-0x00fc0000 : "dev"
+str8100-ehci str8100-ehci: str8100-ehci
+str8100-ehci str8100-ehci: new USB bus registered, assigned bus number 1
+str8100-ehci str8100-ehci: irq 24, io mem 0xcc000000
+str8100-ehci str8100-ehci: USB 0.0 started, EHCI 1.00, driver 10 Dec 2004
+usb usb1: configuration #1 chosen from 1 choice
+hub 1-0:1.0: USB hub found
+hub 1-0:1.0: 2 ports detected
+ohci_hcd: 2005 April 22 USB 1.1 'Open' Host Controller (OHCI) Driver (STR8100)
+str8100-ohci str8100-ohci: str8100-ohci
+str8100-ohci str8100-ohci: new USB bus registered, assigned bus number 2
+str8100-ohci str8100-ohci: irq 23, io mem 0xc4000000
+usb usb2: configuration #1 chosen from 1 choice
+hub 2-0:1.0: USB hub found
+hub 2-0:1.0: 2 ports detected
+Initializing USB Mass Storage driver...
+usbcore: registered new driver usb-storage
+USB Mass Storage support registered.
+str8100_int28vbus_inthandler_init:
+NET: Registered protocol family 2
+IP route cache hash table entries: 1024 (order: 0, 4096 bytes)
+TCP established hash table entries: 4096 (order: 2, 16384 bytes)
+TCP bind hash table entries: 4096 (order: 2, 16384 bytes)
+TCP: Hash tables configured (established 4096 bind 4096)
+TCP reno registered
+TCP bic registered
+NET: Registered protocol family 1
+NET: Registered protocol family 17
+NET: Registered protocol family 15
+VFS: Mounted root (squashfs filesystem) readonly.
+Freeing init memory: 92K
+Mounting root fs rw ...
+Jan  1 08:00:10 crond[794]: crond 2.3.2 dillon, started, log level 8
+
+fuse init (API version 7.8)
+fuse distribution version: 2.7.4
+CSLIP: code copyright 1989 Regents of the University of California
+PPP generic driver version 2.4.2
+NET: Registered protocol family 24
+PPP Deflate Compression module registered
+##################################################
+#                Running Normal RC               #
+##################################################
+## Error: "isqa" not defined
+MAC Addr: 00:26:cd:00:00:2f
+eth0:star_nic_lan_open
+star_nic_enable: starting patch check.
+* start [udhcpc] ...
+info, udhcpc (v1.2.2) started
+debug, Sending discover...
+entering svsd
+
+Welcome to (none) (armv4l-Linux-2.6.16-star@ttyS0/b)
+Starsemi ramdisk 1.0
+
+Copyright (C) 2005 Starsemi ramdisk 1.0
+Released under GNU GPL
+
+(none) login: mkdir: Cannot create directory `/mnt2/.dhs/': Operation not permitted
+the mac = []
+the ktkey = []
+the mac = [0026cd00002f]
+the ktkey = [JoIj1D87N3VupmbY59HPzGhUvsdQOykFde5866b0d355f070d685746ad16b84ea]
+the mac = [0026cd00002f]
+the ktkey = [JoIj1D87N3VupmbY59HPzGhUvsdQOykFde5866b0d355f070d685746ad16b84ea]
+send success
+08:00:24 DEBUG:tools_util.c:125 get mac addr = [0026cd00002f]
+08:00:24 DEBUG:tools_util.c:561 url= [http://prov.dhs.teltel.com]
+08:00:24 DEBUG:tools_util.c:577 hostname = [prov.dhs.teltel.com]
+08:00:24 DEBUG:tools_util.c:597 post send data = [POST /index.php HTTP/1.0
+Accept: */*
+HOST: prov.dhs.teltel.com
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 21
+
+MAC_ADDR=0026cd00002f]
+08:00:24 DEBUG:tools_util.c:203 server url = [http://prov.dhs.teltel.com]
+08:00:24 DEBUG:tools_util.c:152 Calloc size = [20]
+08:00:24 DEBUG:tools_util.c:216 server = [prov.dhs.teltel.com]
+
+
